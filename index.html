@@ -1,1511 +1,563 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8" />
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    />
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ISTT Lab Report Cover Page Generator</title>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-    <!-- ================================
-         TAILWIND / CUSTOM CSS
-    ================================= -->
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    <link rel="stylesheet" href="style.css">
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: #eef2f7;
+            color: #111;
+        }
 
+        .header {
+            background: #123f70;
+            color: white;
+            padding: 18px 28px;
+        }
+        .header h1 { font-size: 22px; margin-bottom: 4px; }
+        .header p { font-size: 13px; opacity: 0.9; }
 
-    <!-- ================================
-         HTML2CANVAS
-    ================================= -->
+        .app {
+            display: grid;
+            grid-template-columns: 390px 1fr;
+            min-height: calc(100vh - 76px);
+        }
 
-    <script
-        src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"
-    ></script>
+        .form-panel {
+            background: white;
+            padding: 22px;
+            border-right: 1px solid #d8dee7;
+            overflow-y: auto;
+        }
+        .form-panel h2 { font-size: 18px; margin-bottom: 4px; }
+        .help { font-size: 12px; color: #6b7280; margin-bottom: 18px; }
 
+        label {
+            display: block;
+            margin: 12px 0 5px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+        .required { color: red; }
 
-    <!-- ================================
-         JSPDF
-    ================================= -->
+        input {
+            width: 100%;
+            padding: 10px 11px;
+            border: 1px solid #cbd2dc;
+            border-radius: 7px;
+            font-size: 14px;
+            outline: none;
+        }
+        input:focus {
+            border-color: #1765a5;
+            box-shadow: 0 0 0 2px rgba(23, 101, 165, 0.12);
+        }
 
-    <script
-        src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"
-    ></script>
+        .buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 9px;
+            margin-top: 20px;
+            position: sticky;
+            bottom: 0;
+            background: white;
+            padding-top: 10px;
+        }
+        button {
+            border: none;
+            border-radius: 7px;
+            padding: 11px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .generate { background: #1261a0; color: white; }
+        .generate:hover { background: #0d4f86; }
+        .generate:disabled { opacity: 0.7; cursor: not-allowed; }
+        .reset { background: #e9edf2; color: #222; }
+        .reset:hover { background: #dfe4ea; }
 
+        .error {
+            display: none;
+            margin-top: 12px;
+            color: #a40000;
+            background: #fff0f0;
+            border: 1px solid #efb3b3;
+            border-radius: 6px;
+            padding: 9px;
+            font-size: 12px;
+        }
+
+        .creator-card {
+            background: #f5f8fc;
+            border: 1px solid #d8e1ec;
+            border-left: 4px solid #1261a0;
+            border-radius: 8px;
+            margin-top: 12px;
+            padding: 12px 14px;
+            margin-bottom: 20px;
+        }
+        .creator-title {
+            font-size: 12px;
+            color: #6b7280;
+            font-weight: 700;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+        }
+        .creator-name {
+            font-size: 13px;
+            font-weight: 700;
+            color: #123f70;
+            margin-bottom: 4px;
+        }
+        .creator-department {
+            font-size: 11px;
+            color: #555;
+            line-height: 1.4;
+        }
+
+        /* ===================== PREVIEW ===================== */
+        .preview-area {
+            padding: 25px;
+            overflow: auto;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        /* ===== A4 COVER PAGE (exact match of your screenshot) ===== */
+        #coverPage {
+            width: 210mm;
+            height: 297mm;
+            background: white;
+            padding: 14mm 16mm 12mm;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.16);
+            font-family: "Times New Roman", Times, serif;
+            color: #000;
+        }
+
+        .logo-area {
+            text-align: center;
+            height: 32mm;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .logo-area img {
+            height: 30mm;
+            width: auto;
+            max-width: 58mm;
+            object-fit: contain;
+        }
+
+        .institution {
+            text-align: center;
+            margin-top: 2mm;
+        }
+        .institution h1 {
+            font-size: 17.5pt;
+            font-weight: bold;
+            margin: 0;
+            letter-spacing: 0.3px;
+        }
+        .institution h2 {
+            font-size: 12pt;
+            font-weight: normal;
+            margin: 3px 0 0;
+        }
+        .institution h3 {
+            font-size: 14.5pt;
+            font-weight: bold;
+            margin: 6px 0 0;
+            text-transform: none;
+        }
+
+        .subject {
+            text-align: center;
+            margin-top: 8mm;
+            font-size: 12.5pt;
+            font-weight: bold;
+        }
+        .subject-code {
+            text-align: center;
+            margin-top: 2.5px;
+            font-size: 11.5pt;
+            font-weight: bold;
+        }
+
+        .date {
+            margin-top: 8mm;
+            font-size: 11pt;
+            font-weight: bold;
+        }
+
+        .info {
+            margin-top: 9mm;
+            position: relative;
+        }
+
+        /* NU Watermark */
+        .watermark {
+            position: absolute;
+            z-index: 0;
+            width: 145mm;
+            left: 50%;
+            top: 48%;
+            transform: translate(-50%, -50%);
+            opacity: 0.15;
+            pointer-events: none;
+        }
+        .watermark img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        /* Table */
+        .info-table {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+            font-size: 11pt;
+            background: rgba(255,255,255,0.78);
+        }
+        .info-table th,
+        .info-table td {
+            border: 1.3px solid #222;
+            padding: 6px 8px;
+            vertical-align: top;
+        }
+        .info-table th {
+            text-align: center;
+            font-weight: bold;
+            font-size: 12pt;
+            background: rgba(255,255,255,0.9);
+        }
+        .by { width: 58%; }
+        .to { width: 42%; }
+
+        .line {
+            margin-bottom: 6px;
+            line-height: 1.35;
+        }
+        .label {
+            font-weight: bold;
+            display: inline-block;
+            min-width: 68px;
+        }
+
+        .signatures {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40mm;
+            margin-top: 28mm;
+            font-size: 11pt;
+        }
+        .signature {
+            text-align: left;
+        }
+
+        /* Responsive */
+        @media (max-width: 1000px) {
+            .app { grid-template-columns: 1fr; }
+            .form-panel { border-right: none; border-bottom: 1px solid #ddd; }
+        }
+    </style>
 </head>
-
-
 <body>
 
+<header class="header">
+    <h1>ISTT Lab Report Cover Page Generator</h1>
+    <p>Enter student information → Generate Cover Page → Download A4 PDF</p>
+</header>
 
-    <!-- =========================================
-         HEADER
-    ========================================== -->
+<main class="app">
 
-    <header class="header">
+    <!-- LEFT FORM -->
+    <section class="form-panel">
+        <h2>Student Information</h2>
+        <div class="help">All fields are required.</div>
 
-        <h1>
-            ISTT Lab Report Cover Page Generator
-        </h1>
+        <label for="department">Department <span class="required">*</span></label>
+        <input id="department" type="text" placeholder="e.g. Department of Computer Science & Engineering (CSE)" value="Department of Computer Science & Engineering (CSE)" />
 
-        <p>
-            Enter student information → Generate Cover Page → Download A4 PDF
-        </p>
+        <label for="subject">1. Subject <span class="required">*</span></label>
+        <input id="subject" type="text" placeholder="e.g. Electrical & Electronic Circuit Lab" />
 
-    </header>
+        <label for="subjectCode">2. Subject Code <span class="required">*</span></label>
+        <input id="subjectCode" type="text" placeholder="e.g. 510204" />
 
+        <label for="submissionDate">3. Submission Date <span class="required">*</span></label>
+        <input id="submissionDate" type="date" />
 
+        <label for="studentName">4. Student Full Name <span class="required">*</span></label>
+        <input id="studentName" type="text" placeholder="Enter full name" />
 
-    <!-- =========================================
-         MAIN APPLICATION
-    ========================================== -->
+        <label for="semester">5. Semester <span class="required">*</span></label>
+        <input id="semester" type="text" placeholder="e.g. 1st" />
 
-    <main class="app">
+        <label for="section">6. Section <span class="required">*</span></label>
+        <input id="section" type="text" placeholder="e.g. B" />
 
+        <label for="classId">7. Class ID <span class="required">*</span></label>
+        <input id="classId" type="text" placeholder="e.g. 222303102" />
 
-        <!-- =====================================
-             LEFT FORM PANEL
-        ====================================== -->
+        <label for="session">8. Session <span class="required">*</span></label>
+        <input id="session" type="text" placeholder="e.g. 22-23" />
 
-        <section class="form-panel">
+        <label for="teacherName">9. Teacher Name <span class="required">*</span></label>
+        <input id="teacherName" type="text" placeholder="e.g. Farzana Akter" />
 
+        <label for="teacherDesignation">10. Teacher Designation <span class="required">*</span></label>
+        <input id="teacherDesignation" type="text" placeholder="e.g. Lecturer, Department of CSE" />
 
-            <!-- STUDENT INFORMATION -->
+        <div class="creator-card">
+            <div class="creator-title">Created By</div>
+            <div class="creator-name">Md. Shazzadul Islam Samim</div>
+            <div class="creator-department">Department of Computer Science & Engineering (CSE)</div>
+        </div>
 
-            <h2>
-                Student Information
-            </h2>
+        <div id="error" class="error"></div>
 
-            <div class="help">
-                All fields are required.
+        <div class="buttons">
+            <button class="generate" onclick="generatePDF()">Generate PDF</button>
+            <button class="reset" onclick="resetForm()">Clear</button>
+        </div>
+    </section>
+
+    <!-- RIGHT PREVIEW -->
+    <section class="preview-area">
+        <div id="coverPage">
+
+            <!-- Logo -->
+            <div class="logo-area">
+                <img src="istt.jpg" alt="ISTT Logo" onerror="this.style.display='none'" />
             </div>
 
-
-
-            <!-- =================================
-                 DEPARTMENT
-            ================================== -->
-
-            <label for="department">
-
-                Department
-
-                <span class="required">
-                    *
-                </span>
-
-            </label>
-
-            <input
-                id="department"
-                type="text"
-                placeholder="e.g. Department of Computer Science & Engineering (CSE)"
-            />
-
-
-
-            <!-- =================================
-                 SUBJECT
-            ================================== -->
-
-            <label for="subject">
-
-                1. Subject
-
-                <span class="required">
-                    *
-                </span>
-
-            </label>
-
-            <input
-                id="subject"
-                type="text"
-                placeholder="e.g. Structured Programming Language"
-            />
-
-
-
-            <!-- =================================
-                 SUBJECT CODE
-            ================================== -->
-
-            <label for="subjectCode">
-
-                2. Subject Code
-
-                <span class="required">
-                    *
-                </span>
-
-            </label>
-
-            <input
-                id="subjectCode"
-                type="text"
-                placeholder="e.g. 510202"
-            />
-
-
-
-            <!-- =================================
-                 SUBMISSION DATE
-            ================================== -->
-
-            <label for="submissionDate">
-
-                3. Submission Date
-
-                <span class="required">
-                    *
-                </span>
-
-            </label>
-
-            <input
-                id="submissionDate"
-                type="date"
-            />
-
-
-
-            <!-- =================================
-                 STUDENT NAME
-            ================================== -->
-
-            <label for="studentName">
-
-                4. Student Full Name
-
-                <span class="required">
-                    *
-                </span>
-
-            </label>
-
-            <input
-                id="studentName"
-                type="text"
-                placeholder="Enter full name"
-            />
-
-
-
-            <!-- =================================
-                 SEMESTER
-            ================================== -->
-
-            <label for="semester">
-
-                5. Semester
-
-                <span class="required">
-                    *
-                </span>
-
-            </label>
-
-            <input
-                id="semester"
-                type="text"
-                placeholder="e.g. 4th"
-            />
-
-
-
-            <!-- =================================
-                 SECTION
-            ================================== -->
-
-            <label for="section">
-
-                6. Section
-
-                <span class="required">
-                    *
-                </span>
-
-            </label>
-
-            <input
-                id="section"
-                type="text"
-                placeholder="e.g. B"
-            />
-
-
-
-            <!-- =================================
-                 CLASS ID
-            ================================== -->
-
-            <label for="classId">
-
-                7. Class ID
-
-                <span class="required">
-                    *
-                </span>
-
-            </label>
-
-            <input
-                id="classId"
-                type="text"
-                placeholder="e.g. 222303102"
-            />
-
-
-
-            <!-- =================================
-                 SESSION
-            ================================== -->
-
-            <label for="session">
-
-                8. Session
-
-                <span class="required">
-                    *
-                </span>
-
-            </label>
-
-            <input
-                id="session"
-                type="text"
-                placeholder="e.g. 2022-23"
-            />
-
-
-
-            <!-- =================================
-                 TEACHER NAME
-            ================================== -->
-
-            <label for="teacherName">
-
-                9. Teacher Name
-
-                <span class="required">
-                    *
-                </span>
-
-            </label>
-
-            <input
-                id="teacherName"
-                type="text"
-                placeholder="e.g. Rakibul Hasan"
-            />
-
-
-
-            <!-- =================================
-                 TEACHER DESIGNATION
-            ================================== -->
-
-            <label for="teacherDesignation">
-
-                10. Teacher Designation
-
-                <span class="required">
-                    *
-                </span>
-
-            </label>
-
-            <input
-                id="teacherDesignation"
-                type="text"
-                placeholder="e.g. Lecturer, Department of CSE"
-            />
-
-
-
-            <!-- =================================
-                 CREATOR INFORMATION
-            ================================== -->
-
-            <div class="creator-card">
-
-                <div class="creator-title">
-                    Created By
-                </div>
-
-
-                <div class="creator-name">
-                    Md. Shazzadul Islam Samim
-                </div>
-
-
-                <div class="creator-department">
-                    Department of Computer Science & Engineering (CSE)
-                </div>
-
+            <!-- Institution -->
+            <div class="institution">
+                <h1>Institute of Science Trade & Technology (ISTT)</h1>
+                <h2 id="previewDepartment">Department of Computer Science & Engineering (CSE)</h2>
+                <h3>LAB Report</h3>
             </div>
 
-
-
-            <!-- =================================
-                 ERROR MESSAGE
-            ================================== -->
-
-            <div
-                id="error"
-                class="error"
-            ></div>
-
-
-
-            <!-- =================================
-                 BUTTONS
-            ================================== -->
-
-            <div class="buttons">
-
-
-                <button
-                    class="generate"
-                    onclick="generatePDF()"
-                >
-                    Generate PDF
-                </button>
-
-
-                <button
-                    class="reset"
-                    onclick="resetForm()"
-                >
-                    Clear
-                </button>
-
-
+            <!-- Subject -->
+            <div class="subject">
+                Subject: <span id="previewSubject">—</span>
+            </div>
+            <div class="subject-code">
+                Subject Code: <span id="previewSubjectCode">—</span>
             </div>
 
-        </section>
-
-
-
-        <!-- =====================================
-             RIGHT PREVIEW PANEL
-        ====================================== -->
-
-        <section class="preview-area">
-
-
-            <!-- =================================
-                 A4 COVER PAGE
-            ================================== -->
-
-            <div id="coverPage">
-
-
-                <!-- =================================
-                     ISTT LOGO
-                ================================== -->
-
-                <div class="logo-area">
-
-                    <img
-                        src="/istt.jpg"
-                        alt="ISTT Logo"
-                    />
-
-                </div>
-
-
-
-                <!-- =================================
-                     INSTITUTION
-                ================================== -->
-
-                <div class="institution">
-
-
-                    <h1>
-                        Institute of Science Trade & Technology (ISTT)
-                    </h1>
-
-
-                    <h2 id="previewDepartment">
-                        Department of Computer Science & Engineering (CSE)
-                    </h2>
-
-
-                    <h3>
-                        LAB Report
-                    </h3>
-
-                </div>
-
-
-
-                <!-- =================================
-                     SUBJECT
-                ================================== -->
-
-                <div class="subject">
-
-                    Subject:
-
-                    <span id="previewSubject">
-                        —
-                    </span>
-
-                </div>
-
-
-
-                <!-- =================================
-                     SUBJECT CODE
-                ================================== -->
-
-                <div class="subject-code">
-
-                    Subject Code:
-
-                    <span id="previewSubjectCode">
-                        —
-                    </span>
-
-                </div>
-
-
-
-                <!-- =================================
-                     SUBMISSION DATE
-                ================================== -->
-
-                <div class="date">
-
-                    Submission Date:
-
-                    <span id="previewDate">
-                        —
-                    </span>
-
-                </div>
-
-
-
-                <!-- =================================
-                     INFORMATION AREA
-                ================================== -->
-
-                <div class="info">
-
-
-                    <!-- =================================
-                         NU WATERMARK
-                    ================================== -->
-
-                    <div class="watermark">
-
-                        <img
-                            src="/nu.jpg"
-                            alt="National University Logo"
-                        />
-
-                    </div>
-
-
-
-                    <!-- =================================
-                         INFORMATION TABLE
-                    ================================== -->
-
-                    <table class="info-table">
-
-
-                        <!-- TABLE HEADER -->
-
-                        <tr>
-
-                            <th class="by">
-                                Submitted By
-                            </th>
-
-                            <th class="to">
-                                Submitted To
-                            </th>
-
-                        </tr>
-
-
-
-                        <!-- TABLE DATA -->
-
-                        <tr>
-
-
-                            <!-- =================================
-                                 STUDENT INFORMATION
-                            ================================== -->
-
-                            <td>
-
-
-                                <div class="line">
-
-                                    <span class="label">
-                                        Name
-                                    </span>
-
-                                    &nbsp;&nbsp;&nbsp;:
-
-                                    <span id="previewName">
-                                        —
-                                    </span>
-
-                                </div>
-
-
-
-                                <div class="line">
-
-                                    <span class="label">
-                                        Semester
-                                    </span>
-
-                                    :
-
-                                    <span id="previewSemester">
-                                        —
-                                    </span>
-
-                                </div>
-
-
-
-                                <div class="line">
-
-                                    <span class="label">
-                                        Section
-                                    </span>
-
-                                    &nbsp;&nbsp;:
-
-                                    <span id="previewSection">
-                                        —
-                                    </span>
-
-                                </div>
-
-
-
-                                <div class="line">
-
-                                    <span class="label">
-                                        Class ID
-                                    </span>
-
-                                    &nbsp;&nbsp;:
-
-                                    <span id="previewClassId">
-                                        —
-                                    </span>
-
-                                </div>
-
-
-
-                                <div class="line">
-
-                                    <span class="label">
-                                        Session
-                                    </span>
-
-                                    &nbsp;&nbsp;&nbsp;:
-
-                                    <span id="previewSession">
-                                        —
-                                    </span>
-
-                                </div>
-
-                            </td>
-
-
-
-                            <!-- =================================
-                                 TEACHER INFORMATION
-                            ================================== -->
-
-                            <td>
-
-
-                                <div class="line">
-
-                                    Name :
-
-                                    <span id="previewTeacherName">
-                                        —
-                                    </span>
-
-                                </div>
-
-
-
-                                <div
-                                    class="line"
-                                    id="previewTeacherDesignation"
-                                >
-                                    —
-                                </div>
-
-
-
-                                <div class="line">
-
-                                    Institute of Science Trade & Technology
-
-                                </div>
-
-
-
-                                <div class="line">
-
-                                    Mirpur-13, Dhaka.
-
-                                </div>
-
-                            </td>
-
-                        </tr>
-
-                    </table>
-
-                </div>
-
-
-
-                <!-- =================================
-                     SIGNATURE
-                ================================== -->
-
-                <div class="signatures">
-
-
-                    <div class="signature">
-
-                        Signature &amp; Date
-
-                    </div>
-
-
-
-                    <div class="signature">
-
-                        Signature &amp; Date
-
-                    </div>
-
-
-                </div>
-
-
+            <!-- Date -->
+            <div class="date">
+                Submission Date: <span id="previewDate">—</span>
             </div>
 
-        </section>
+            <!-- Info Table + Watermark -->
+            <div class="info">
+                <div class="watermark">
+                    <img src="nu.jpg" alt="National University Logo" onerror="this.style.display='none'" />
+                </div>
 
-    </main>
+                <table class="info-table">
+                    <tr>
+                        <th class="by">Submitted By</th>
+                        <th class="to">Submitted To</th>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="line">
+                                <span class="label">Name</span> : <span id="previewName">—</span>
+                            </div>
+                            <div class="line">
+                                <span class="label">Semester</span> : <span id="previewSemester">—</span>
+                            </div>
+                            <div class="line">
+                                <span class="label">Section</span> : <span id="previewSection">—</span>
+                            </div>
+                            <div class="line">
+                                <span class="label">Class ID</span> : <span id="previewClassId">—</span>
+                            </div>
+                            <div class="line">
+                                <span class="label">Session</span> : <span id="previewSession">—</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="line">
+                                Name : <span id="previewTeacherName">—</span>
+                            </div>
+                            <div class="line" id="previewTeacherDesignation">—</div>
+                            <div class="line">Institute of Science Trade & Technology,</div>
+                            <div class="line">Mirpur-13, Dhaka.</div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
 
+            <!-- Signatures -->
+            <div class="signatures">
+                <div class="signature">Signature & Date</div>
+                <div class="signature">Signature & Date</div>
+            </div>
+        </div>
+    </section>
+</main>
 
+<script>
+    const fields = {
+        department: "previewDepartment",
+        subject: "previewSubject",
+        subjectCode: "previewSubjectCode",
+        studentName: "previewName",
+        semester: "previewSemester",
+        section: "previewSection",
+        classId: "previewClassId",
+        session: "previewSession",
+        teacherName: "previewTeacherName",
+        teacherDesignation: "previewTeacherDesignation"
+    };
 
-    <!-- =========================================
-         JAVASCRIPT
-    ========================================== -->
+    function formatDate(value) {
+        if (!value) return "—";
+        const date = new Date(value + "T00:00:00");
+        return date.toLocaleDateString("en-GB", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric"
+        });
+    }
 
-    <script>
-
-
-        /* =========================================
-           INPUT → PREVIEW CONNECTION
-        ========================================== */
-
-        const fields = {
-
-            department:
-                "previewDepartment",
-
-            subject:
-                "previewSubject",
-
-            subjectCode:
-                "previewSubjectCode",
-
-            studentName:
-                "previewName",
-
-            semester:
-                "previewSemester",
-
-            section:
-                "previewSection",
-
-            classId:
-                "previewClassId",
-
-            session:
-                "previewSession",
-
-            teacherName:
-                "previewTeacherName",
-
-            teacherDesignation:
-                "previewTeacherDesignation"
-
-        };
-
-
-
-        /* =========================================
-           DATE FORMATTER
-        ========================================== */
-
-        function formatDate(value) {
-
-            if (!value) {
-
-                return "—";
-
-            }
-
-
-            const date =
-                new Date(
-                    value + "T00:00:00"
-                );
-
-
-            return date.toLocaleDateString(
-                "en-GB",
-                {
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "numeric"
-                }
-            );
-
+    function updatePreview() {
+        for (const [inputId, previewId] of Object.entries(fields)) {
+            const input = document.getElementById(inputId);
+            const preview = document.getElementById(previewId);
+            if (!input || !preview) continue;
+            preview.textContent = input.value.trim() || "—";
         }
+        document.getElementById("previewDate").textContent =
+            formatDate(document.getElementById("submissionDate").value);
+    }
 
+    document.querySelectorAll("input").forEach(input => {
+        input.addEventListener("input", updatePreview);
+        input.addEventListener("change", updatePreview);
+    });
 
-
-        /* =========================================
-           UPDATE PREVIEW
-        ========================================== */
-
-        function updatePreview() {
-
-
-            /*
-             * Update normal fields
-             */
-
-            for (
-                const [
-                    inputId,
-                    previewId
-                ]
-                of Object.entries(fields)
-            ) {
-
-
-                const input =
-                    document.getElementById(
-                        inputId
-                    );
-
-
-                const preview =
-                    document.getElementById(
-                        previewId
-                    );
-
-
-                if (!input || !preview) {
-                    continue;
-                }
-
-
-                const value =
-                    input.value.trim();
-
-
-                preview.textContent =
-                    value || "—";
-
-            }
-
-
-
-            /*
-             * Update date
-             */
-
-            const date =
-                document
-                    .getElementById(
-                        "submissionDate"
-                    )
-                    .value;
-
-
-            document
-                .getElementById(
-                    "previewDate"
-                )
-                .textContent =
-                formatDate(date);
-
+    function validate() {
+        const required = [
+            "department", "subject", "subjectCode", "submissionDate",
+            "studentName", "semester", "section", "classId",
+            "session", "teacherName", "teacherDesignation"
+        ];
+        const missing = required.filter(id => {
+            const el = document.getElementById(id);
+            return !el || !el.value.trim();
+        });
+        const error = document.getElementById("error");
+        if (missing.length > 0) {
+            error.style.display = "block";
+            error.textContent = "Please complete all required fields before generating the PDF.";
+            return false;
         }
+        error.style.display = "none";
+        return true;
+    }
 
+    function waitForImages(container) {
+        const images = container.querySelectorAll("img");
+        return Promise.all(
+            Array.from(images).map(img => {
+                if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+                return new Promise(resolve => {
+                    img.onload = resolve;
+                    img.onerror = resolve;
+                });
+            })
+        );
+    }
 
+    async function generatePDF() {
+        updatePreview();
+        if (!validate()) return;
 
-        /* =========================================
-           LIVE PREVIEW
-        ========================================== */
+        const button = document.querySelector(".generate");
+        button.disabled = true;
+        button.textContent = "Creating PDF...";
 
-        document
-            .querySelectorAll("input")
-            .forEach(input => {
+        try {
+            const page = document.getElementById("coverPage");
 
+            if (document.fonts && document.fonts.ready) {
+                await document.fonts.ready;
+            }
+            await waitForImages(page);
+            await new Promise(r => setTimeout(r, 150));
 
-                input.addEventListener(
-                    "input",
-                    updatePreview
-                );
-
-
-                input.addEventListener(
-                    "change",
-                    updatePreview
-                );
-
+            const canvas = await html2canvas(page, {
+                scale: 3,                    // higher quality
+                backgroundColor: "#ffffff",
+                useCORS: true,
+                allowTaint: false,
+                logging: false,
+                imageTimeout: 20000,
+                scrollX: 0,
+                scrollY: 0,
+                windowWidth: page.scrollWidth,
+                windowHeight: page.scrollHeight
             });
 
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF({
+                orientation: "portrait",
+                unit: "mm",
+                format: "a4",
+                compress: true
+            });
 
+            const pdfWidth = 210;
+            const pdfHeight = 297;
 
-        /* =========================================
-           VALIDATION
-        ========================================== */
+            // Exact fit – no scaling distortion
+            const imgData = canvas.toDataURL("image/png", 1.0);
 
-        function validate() {
+            pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight, undefined, "FAST");
 
+            const studentName = document.getElementById("studentName").value
+                .trim().replace(/[^a-z0-9]+/gi, "_").replace(/^_|_$/g, "") || "Student";
+            const subject = document.getElementById("subject").value
+                .trim().replace(/[^a-z0-9]+/gi, "_").replace(/^_|_$/g, "") || "Cover";
 
-            const requiredFields = [
+            pdf.save(`${studentName}_${subject}_Cover_Page.pdf`);
 
-                "department",
-
-                "subject",
-
-                "subjectCode",
-
-                "submissionDate",
-
-                "studentName",
-
-                "semester",
-
-                "section",
-
-                "classId",
-
-                "session",
-
-                "teacherName",
-
-                "teacherDesignation"
-
-            ];
-
-
-            const missing =
-                requiredFields.filter(
-                    id => {
-
-                        const element =
-                            document.getElementById(
-                                id
-                            );
-
-                        return (
-                            !element ||
-                            !element.value.trim()
-                        );
-
-                    }
-                );
-
-
-            const error =
-                document.getElementById(
-                    "error"
-                );
-
-
-            if (missing.length > 0) {
-
-
-                error.style.display =
-                    "block";
-
-
-                error.textContent =
-                    "Please complete all required fields before generating the PDF.";
-
-
-                return false;
-
-            }
-
-
-            error.style.display =
-                "none";
-
-
-            return true;
-
+        } catch (err) {
+            console.error(err);
+            alert("PDF তৈরি করা যায়নি। Logo files (istt.jpg & nu.jpg) check করুন এবং আবার try করুন।");
+        } finally {
+            button.disabled = false;
+            button.textContent = "Generate PDF";
         }
-
-
-
-        /* =========================================
-           WAIT FOR IMAGES
-        ========================================== */
-
-        function waitForImages(container) {
-
-            const images =
-                container.querySelectorAll(
-                    "img"
-                );
-
-
-            return Promise.all(
-
-                Array.from(images)
-                    .map(img => {
-
-
-                        /*
-                         * Image already loaded
-                         */
-
-                        if (
-                            img.complete &&
-                            img.naturalWidth > 0
-                        ) {
-
-                            return Promise.resolve();
-
-                        }
-
-
-                        /*
-                         * Wait for image
-                         */
-
-                        return new Promise(
-                            resolve => {
-
-                                img.onload =
-                                    resolve;
-
-                                img.onerror =
-                                    resolve;
-
-                            }
-                        );
-
-                    })
-
-            );
-
-        }
-
-
-
-        /* =========================================
-           GENERATE PDF
-        ========================================== */
-
-        async function generatePDF() {
-
-
-            /*
-             * Update preview
-             */
-
-            updatePreview();
-
-
-
-            /*
-             * Validate
-             */
-
-            if (!validate()) {
-
-                return;
-
-            }
-
-
-
-            /*
-             * Get button
-             */
-
-            const button =
-                document.querySelector(
-                    ".generate"
-                );
-
-
-            button.disabled =
-                true;
-
-
-            button.textContent =
-                "Creating PDF...";
-
-
-
-            try {
-
-
-                /*
-                 * Get cover page
-                 */
-
-                const page =
-                    document.getElementById(
-                        "coverPage"
-                    );
-
-
-
-                /*
-                 * Wait for fonts
-                 */
-
-                if (
-                    document.fonts &&
-                    document.fonts.ready
-                ) {
-
-                    await document.fonts.ready;
-
-                }
-
-
-
-                /*
-                 * Wait for images
-                 */
-
-                await waitForImages(page);
-
-
-
-                /*
-                 * Small rendering delay
-                 */
-
-                await new Promise(
-                    resolve =>
-                        setTimeout(
-                            resolve,
-                            100
-                        )
-                );
-
-
-
-                /*
-                 * Convert HTML to Canvas
-                 */
-
-                const canvas =
-                    await html2canvas(
-                        page,
-                        {
-
-                            /*
-                             * High quality
-                             */
-
-                            scale: 2,
-
-
-
-                            /*
-                             * Keep background white
-                             */
-
-                            backgroundColor:
-                                "#ffffff",
-
-
-
-                            /*
-                             * Allow external images
-                             */
-
-                            useCORS:
-                                true,
-
-
-
-                            /*
-                             * Prevent tainted canvas
-                             */
-
-                            allowTaint:
-                                false,
-
-
-
-                            /*
-                             * Disable unnecessary logs
-                             */
-
-                            logging:
-                                false,
-
-
-
-                            /*
-                             * Image loading timeout
-                             */
-
-                            imageTimeout:
-                                15000,
-
-
-
-                            /*
-                             * Fixed scroll position
-                             */
-
-                            scrollX:
-                                0,
-
-                            scrollY:
-                                0
-
-                        }
-                    );
-
-
-
-                /*
-                 * Get jsPDF
-                 */
-
-                const {
-                    jsPDF
-                } =
-                    window.jspdf;
-
-
-
-                /*
-                 * Create A4 PDF
-                 */
-
-                const pdf =
-                    new jsPDF({
-
-                        orientation:
-                            "portrait",
-
-                        unit:
-                            "mm",
-
-                        format:
-                            "a4",
-
-                        compress:
-                            true
-
-                    });
-
-
-
-                /*
-                 * A4 dimensions
-                 */
-
-                const pdfWidth =
-                    210;
-
-                const pdfHeight =
-                    297;
-
-
-
-                /*
-                 * Get actual canvas dimensions
-                 */
-
-                const canvasWidth =
-                    canvas.width;
-
-                const canvasHeight =
-                    canvas.height;
-
-
-
-                /*
-                 * Calculate original
-                 * canvas aspect ratio
-                 */
-
-                const canvasRatio =
-                    canvasHeight /
-                    canvasWidth;
-
-
-
-                /*
-                 * Start with full A4 width
-                 */
-
-                let imageWidth =
-                    pdfWidth;
-
-
-                let imageHeight =
-                    imageWidth *
-                    canvasRatio;
-
-
-
-                /*
-                 * If image is taller than A4,
-                 * scale it using A4 height.
-                 */
-
-                if (
-                    imageHeight >
-                    pdfHeight
-                ) {
-
-
-                    imageHeight =
-                        pdfHeight;
-
-
-                    imageWidth =
-                        imageHeight /
-                        canvasRatio;
-
-                }
-
-
-
-                /*
-                 * Center image
-                 */
-
-                const x =
-                    (
-                        pdfWidth -
-                        imageWidth
-                    ) / 2;
-
-
-                const y =
-                    (
-                        pdfHeight -
-                        imageHeight
-                    ) / 2;
-
-
-
-                /*
-                 * Convert canvas to PNG
-                 *
-                 * PNG keeps text and logos
-                 * sharper than JPEG.
-                 */
-
-                const image =
-                    canvas.toDataURL(
-                        "image/png"
-                    );
-
-
-
-                /*
-                 * Add image without distortion
-                 */
-
-                pdf.addImage(
-
-                    image,
-
-                    "PNG",
-
-                    x,
-
-                    y,
-
-                    imageWidth,
-
-                    imageHeight,
-
-                    undefined,
-
-                    "FAST"
-
-                );
-
-
-
-                /*
-                 * Create safe filename
-                 */
-
-                const studentName =
-                    document
-                        .getElementById(
-                            "studentName"
-                        )
-                        .value
-                        .trim()
-                        .replace(
-                            /[^a-z0-9]+/gi,
-                            "_"
-                        )
-                        .replace(
-                            /^_|_$/g,
-                            ""
-                        );
-
-
-                const subject =
-                    document
-                        .getElementById(
-                            "subject"
-                        )
-                        .value
-                        .trim()
-                        .replace(
-                            /[^a-z0-9]+/gi,
-                            "_"
-                        )
-                        .replace(
-                            /^_|_$/g,
-                            ""
-                        );
-
-
-
-                /*
-                 * Download PDF
-                 */
-
-                pdf.save(
-
-                    `${studentName}_${subject}_Cover_Page.pdf`
-
-                );
-
-
-            }
-
-            catch (error) {
-
-
-                console.error(
-                    "PDF Generation Error:",
-                    error
-                );
-
-
-                alert(
-                    "PDF তৈরি করা যায়নি। Please check your logo files and try again."
-                );
-
-            }
-
-
-            finally {
-
-
-                button.disabled =
-                    false;
-
-
-                button.textContent =
-                    "Generate PDF";
-
-            }
-
-        }
-
-
-
-        /* =========================================
-           RESET FORM
-        ========================================== */
-
-        function resetForm() {
-
-
-            /*
-             * Clear all inputs
-             */
-
-            document
-                .querySelectorAll("input")
-                .forEach(input => {
-
-                    input.value = "";
-
-                });
-
-
-
-            /*
-             * Update preview
-             */
-
-            updatePreview();
-
-
-
-            /*
-             * Hide error
-             */
-
-            document
-                .getElementById(
-                    "error"
-                )
-                .style.display =
-                "none";
-
-        }
-
-
-
-        /* =========================================
-           INITIAL PREVIEW
-        ========================================== */
-
+    }
+
+    function resetForm() {
+        document.querySelectorAll("input").forEach(i => i.value = "");
+        document.getElementById("department").value = "Department of Computer Science & Engineering (CSE)";
         updatePreview();
+        document.getElementById("error").style.display = "none";
+    }
 
-    </script>
-
+    updatePreview();
+</script>
 </body>
-
 </html>
