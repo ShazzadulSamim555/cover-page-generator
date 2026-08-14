@@ -43,15 +43,21 @@
       color: #000;
     }
 
-    /* Mobile scaling */
+    /* Mobile scaling - improved for better size & less empty space */
     @media (max-width: 1000px) {
       .mobile-cover {
-        transform: scale(0.58);
+        transform: scale(0.68);
         transform-origin: top center;
+        margin-bottom: -95mm;
+      }
+    }
+    @media (max-width: 480px) {
+      .mobile-cover {
+        transform: scale(0.58);
         margin-bottom: -125mm;
       }
     }
-    @media (max-width: 420px) {
+    @media (max-width: 380px) {
       .mobile-cover {
         transform: scale(0.52);
         margin-bottom: -142mm;
@@ -203,7 +209,7 @@
     </section>
 
     <!-- ========== PREVIEW AREA ========== -->
-    <section class="flex items-start justify-center overflow-auto bg-[#e8eef5] p-[30px] max-[1000px]:px-3 max-[1000px]:pb-10 max-[1000px]:pt-[18px]">
+    <section class="flex items-start justify-center overflow-auto bg-[#e8eef5] p-[30px] max-[1000px]:px-2 max-[1000px]:pb-6 max-[1000px]:pt-4">
 
       <div id="coverPage" class="cover-page mobile-cover shadow-[0_8px_30px_rgba(0,0,0,0.12)]">
 
