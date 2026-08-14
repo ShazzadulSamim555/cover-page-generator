@@ -1,593 +1,471 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-    <title>ISTT Lab Report Cover Page Generator</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>ISTT Lab Report Cover Page Generator</title>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- html2canvas -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <!-- jsPDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+  <style>
+    html {
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
 
-        html {
-            -webkit-text-size-adjust: 100%;
-            -moz-text-size-adjust: 100%;
-            -ms-text-size-adjust: 100%;
-            text-size-adjust: 100%;
-        }
+    /* Animated header gradient */
+    @keyframes gradientMove {
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
 
-        body {
-            font-family: Arial, Helvetica, sans-serif;
-            background: #eef2f7;
-            color: #111;
-        }
+    .animated-gradient {
+      background: linear-gradient(-45deg, #0b1e3d, #123f70, #1a5fb4, #0d47a1, #0b1e3d);
+      background-size: 400% 400%;
+      animation: gradientMove 9s ease infinite;
+    }
 
-        .header {
-            background: #123f70;
-            color: white;
-            padding: 18px 28px;
-        }
-        .header h1 { font-size: 22px; margin-bottom: 4px; }
-        .header p { font-size: 13px; opacity: 0.9; }
+    /* A4 Cover Page */
+    .cover-page {
+      width: 210mm;
+      height: 297mm;
+      background: white;
+      padding: 15mm 18mm 14mm;
+      position: relative;
+      overflow: hidden;
+      font-family: "Times New Roman", Times, "Liberation Serif", serif;
+      color: #000;
+    }
 
-        .app {
-            display: grid;
-            grid-template-columns: 390px 1fr;
-            min-height: calc(100vh - 76px);
-        }
+    /* Mobile scaling */
+    @media (max-width: 1000px) {
+      .mobile-cover {
+        transform: scale(0.58);
+        transform-origin: top center;
+        margin-bottom: -125mm;
+      }
+    }
+    @media (max-width: 420px) {
+      .mobile-cover {
+        transform: scale(0.52);
+        margin-bottom: -142mm;
+      }
+    }
 
-        .form-panel {
-            background: white;
-            padding: 22px;
-            border-right: 1px solid #d8dee7;
-            overflow-y: auto;
-        }
-        .form-panel h2 { font-size: 18px; margin-bottom: 4px; }
-        .help { font-size: 12px; color: #6b7280; margin-bottom: 18px; }
-
-        label {
-            display: block;
-            margin: 12px 0 5px;
-            font-size: 13px;
-            font-weight: 700;
-        }
-        .required { color: red; }
-
-        input {
-            width: 100%;
-            padding: 10px 11px;
-            border: 1px solid #cbd2dc;
-            border-radius: 7px;
-            font-size: 14px;
-            outline: none;
-        }
-        input:focus {
-            border-color: #1765a5;
-            box-shadow: 0 0 0 2px rgba(23, 101, 165, 0.12);
-        }
-
-        .buttons {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 9px;
-            margin-top: 20px;
-            position: sticky;
-            bottom: 0;
-            background: white;
-            padding-top: 10px;
-        }
-        button {
-            border: none;
-            border-radius: 7px;
-            padding: 11px;
-            font-weight: 700;
-            cursor: pointer;
-        }
-        .generate { background: #1261a0; color: white; }
-        .generate:hover { background: #0d4f86; }
-        .generate:disabled { opacity: 0.7; cursor: not-allowed; }
-        .reset { background: #e9edf2; color: #222; }
-        .reset:hover { background: #dfe4ea; }
-
-        .error {
-            display: none;
-            margin-top: 12px;
-            color: #a40000;
-            background: #fff0f0;
-            border: 1px solid #efb3b3;
-            border-radius: 6px;
-            padding: 9px;
-            font-size: 12px;
-        }
-
-        .creator-card {
-            background: #f5f8fc;
-            border: 1px solid #d8e1ec;
-            border-left: 4px solid #1261a0;
-            border-radius: 8px;
-            margin-top: 12px;
-            padding: 12px 14px;
-            margin-bottom: 20px;
-        }
-        .creator-title {
-            font-size: 12px;
-            color: #6b7280;
-            font-weight: 700;
-            margin-bottom: 4px;
-            text-transform: uppercase;
-        }
-        .creator-name {
-            font-size: 13px;
-            font-weight: 700;
-            color: #123f70;
-            margin-bottom: 4px;
-        }
-        .creator-department {
-            font-size: 11px;
-            color: #555;
-            line-height: 1.4;
-        }
-
-        /* ===================== PREVIEW ===================== */
-        .preview-area {
-            padding: 25px;
-            overflow: auto;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-        }
-
-        /* ===== A4 COVER PAGE ===== */
-        .cover-page {
-            width: 210mm;
-            height: 297mm;
-            background: white;
-            padding: 15mm 18mm 14mm;   /* ← side margin বাড়ানো হয়েছে (18mm) */
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 5px 25px rgba(0,0,0,0.16);
-            font-family: "Times New Roman", Times, "Liberation Serif", serif;
-            color: #000;
-            -webkit-text-size-adjust: 100%;
-            text-size-adjust: 100%;
-        }
-
-        .cover-page * {
-            -webkit-text-size-adjust: 100%;
-            text-size-adjust: 100%;
-        }
-
-        .logo-area {
-            text-align: center;
-            height: 32mm;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        .logo-area img {
-            height: 30mm;
-            width: auto;
-            max-width: 58mm;
-            object-fit: contain;
-        }
-
-        .institution {
-            text-align: center;
-            margin-top: 2mm;
-        }
-        .institution h1 {
-            font-size: 17.5pt;
-            font-weight: bold;
-            margin: 0;
-            letter-spacing: 0.3px;
-            line-height: 1.25;
-        }
-        .institution h2 {
-            font-size: 12pt;
-            font-weight: normal;
-            margin: 3px 0 0;
-            line-height: 1.3;
-        }
-        .institution h3 {
-            font-size: 14.5pt;
-            font-weight: bold;
-            margin: 6px 0 0;
-        }
-
-        .subject {
-            text-align: center;
-            margin-top: 8mm;
-            font-size: 12.5pt;
-            font-weight: bold;
-        }
-        .subject-code {
-            text-align: center;
-            margin-top: 2.5px;
-            font-size: 11.5pt;
-            font-weight: bold;
-        }
-
-        .date {
-            margin-top: 8mm;
-            font-size: 11pt;
-            font-weight: bold;
-        }
-
-        .info {
-            margin-top: 9mm;
-            position: relative;
-        }
-
-        .watermark {
-            position: absolute;
-            z-index: 0;
-            width: 145mm;
-            left: 50%;
-            top: 48%;
-            transform: translate(-50%, -50%);
-            opacity: 0.15;
-            pointer-events: none;
-        }
-        .watermark img {
-            width: 100%;
-            height: auto;
-            display: block;
-        }
-
-        .info-table {
-            position: relative;
-            z-index: 1;
-            width: 100%;
-            border-collapse: collapse;
-            table-layout: fixed;
-            font-size: 11pt;
-            background: rgba(255,255,255,0.78);
-        }
-        .info-table th,
-        .info-table td {
-            border: 1.3px solid #222;
-            padding: 6px 8px;
-            vertical-align: top;
-        }
-        .info-table th {
-            text-align: center;
-            font-weight: bold;
-            font-size: 12pt;
-            background: rgba(255,255,255,0.9);
-        }
-        .by { width: 58%; }
-        .to { width: 42%; }
-
-        .line {
-            margin-bottom: 6px;
-            line-height: 1.35;
-        }
-        .label {
-            font-weight: bold;
-            display: inline-block;
-            min-width: 68px;
-        }
-
-        .signatures {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 40mm;
-            margin-top: 28mm;
-            font-size: 11pt;
-        }
-        .signature {
-            text-align: left;
-        }
-
-        /* Mobile preview only */
-        @media (max-width: 1000px) {
-            .app { grid-template-columns: 1fr; }
-            .form-panel { border-right: none; border-bottom: 1px solid #ddd; }
-
-            .preview-area {
-                padding: 15px 10px;
-            }
-            .cover-page {
-                transform: scale(0.48);
-                transform-origin: top center;
-                margin-bottom: -155mm;
-            }
-        }
-    </style>
+    /* Hidden clone used for PDF generation */
+    #coverPage-clone {
+      position: absolute !important;
+      left: -9999px !important;
+      top: 0 !important;
+      width: 210mm !important;
+      height: 297mm !important;
+      transform: none !important;
+      margin: 0 !important;
+      box-shadow: none !important;
+    }
+  </style>
 </head>
-<body>
 
-<header class="header">
-    <h1>ISTT Lab Report Cover Page Generator</h1>
-    <p>Enter student information → Generate Cover Page → Download A4 PDF</p>
-</header>
+<body class="bg-[#f0f4f8] text-[#1a1a1a] font-sans leading-normal">
 
-<main class="app">
+  <!-- ===================== HEADER ===================== -->
+  <header class="animated-gradient px-8 py-5 text-white shadow-[0_4px_20px_rgba(15,44,90,0.3)] max-[1000px]:px-5 max-[1000px]:py-4">
+    <h1 class="mb-1 text-2xl font-bold tracking-[-0.3px] max-[1000px]:text-xl">
+      ISTT Lab Report Cover Page Generator
+    </h1>
+    <p class="text-sm opacity-90">
+      Enter student information → Generate Cover Page → Download A4 PDF
+    </p>
+  </header>
 
-    <section class="form-panel">
-        <h2>Student Information</h2>
-        <div class="help">All fields are required.</div>
+  <!-- ===================== MAIN ===================== -->
+  <main class="grid min-h-[calc(100vh-84px)] grid-cols-[400px_1fr] max-[1000px]:grid-cols-1">
 
-        <label for="department">Department <span class="required">*</span></label>
-        <input id="department" type="text" placeholder="e.g. Department of Computer Science & Engineering (CSE)" value="Department of Computer Science & Engineering (CSE)" />
+    <!-- ========== FORM PANEL ========== -->
+    <section class="overflow-y-auto border-r border-[#e2e8f0] bg-white px-[26px] py-7 shadow-[4px_0_24px_rgba(0,0,0,0.03)] max-[1000px]:border-r-0 max-[1000px]:border-b max-[1000px]:px-[18px] max-[1000px]:py-[22px]">
 
-        <label for="subject">1. Subject <span class="required">*</span></label>
-        <input id="subject" type="text" placeholder="e.g. Structured Programming Language" />
+      <h2 class="mb-1.5 text-xl font-bold text-[#0f2c5a]">Student Information</h2>
+      <p class="mb-[22px] text-[13px] text-slate-500">
+        All fields are required. Fill carefully for an accurate cover page.
+      </p>
 
-        <label for="subjectCode">2. Subject Code <span class="required">*</span></label>
-        <input id="subjectCode" type="text" placeholder="e.g. 510202" />
+      <!-- Form Fields -->
+      <div class="space-y-3.5">
 
-        <label for="submissionDate">3. Submission Date <span class="required">*</span></label>
-        <input id="submissionDate" type="date" />
-
-        <label for="studentName">4. Student Full Name <span class="required">*</span></label>
-        <input id="studentName" type="text" placeholder="Enter full name" />
-
-        <label for="semester">5. Semester <span class="required">*</span></label>
-        <input id="semester" type="text" placeholder="e.g. 1st" />
-
-        <label for="section">6. Section <span class="required">*</span></label>
-        <input id="section" type="text" placeholder="e.g. B" />
-
-        <label for="classId">7. Class ID <span class="required">*</span></label>
-        <input id="classId" type="text" placeholder="e.g. 222303102" />
-
-        <label for="session">8. Session <span class="required">*</span></label>
-        <input id="session" type="text" placeholder="e.g. 22-23" />
-
-        <label for="teacherName">9. Teacher Name <span class="required">*</span></label>
-        <input id="teacherName" type="text" placeholder="e.g. Rakibul Hasan" />
-
-        <label for="teacherDesignation">10. Teacher Designation <span class="required">*</span></label>
-        <input id="teacherDesignation" type="text" placeholder="e.g. Lecturer, Department of CSE" />
-
-        <div class="creator-card">
-            <div class="creator-title">Created By</div>
-            <div class="creator-name">Md. Shazzadul Islam Samim</div>
-            <div class="creator-department">Department of Computer Science & Engineering (CSE)</div>
+        <div>
+          <label for="department" class="mb-1.5 block text-[13px] font-semibold text-slate-700">
+            Department <span class="text-rose-600">*</span>
+          </label>
+          <input id="department" type="text"
+            value="Department of Computer Science & Engineering (CSE)"
+            placeholder="e.g. Department of Computer Science & Engineering (CSE)"
+            class="form-input" />
         </div>
 
-        <div id="error" class="error"></div>
-
-        <div class="buttons">
-            <button class="generate" onclick="generatePDF()">Generate PDF</button>
-            <button class="reset" onclick="resetForm()">Clear</button>
+        <div>
+          <label for="subject" class="mb-1.5 block text-[13px] font-semibold text-slate-700">
+            1. Subject <span class="text-rose-600">*</span>
+          </label>
+          <input id="subject" type="text" placeholder="e.g. Database Management System Lab" class="form-input" />
         </div>
+
+        <div>
+          <label for="subjectCode" class="mb-1.5 block text-[13px] font-semibold text-slate-700">
+            2. Subject Code <span class="text-rose-600">*</span>
+          </label>
+          <input id="subjectCode" type="text" placeholder="e.g. 520222" class="form-input" />
+        </div>
+
+        <div>
+          <label for="submissionDate" class="mb-1.5 block text-[13px] font-semibold text-slate-700">
+            3. Submission Date <span class="text-rose-600">*</span>
+          </label>
+          <input id="submissionDate" type="date" class="form-input" />
+        </div>
+
+        <div>
+          <label for="studentName" class="mb-1.5 block text-[13px] font-semibold text-slate-700">
+            4. Student Full Name <span class="text-rose-600">*</span>
+          </label>
+          <input id="studentName" type="text" placeholder="Enter full name" class="form-input" />
+        </div>
+
+        <div>
+          <label for="semester" class="mb-1.5 block text-[13px] font-semibold text-slate-700">
+            5. Semester <span class="text-rose-600">*</span>
+          </label>
+          <input id="semester" type="text" placeholder="e.g. 4th" class="form-input" />
+        </div>
+
+        <div>
+          <label for="section" class="mb-1.5 block text-[13px] font-semibold text-slate-700">
+            6. Section <span class="text-rose-600">*</span>
+          </label>
+          <input id="section" type="text" placeholder="e.g. B" class="form-input" />
+        </div>
+
+        <div>
+          <label for="classId" class="mb-1.5 block text-[13px] font-semibold text-slate-700">
+            7. Class ID <span class="text-rose-600">*</span>
+          </label>
+          <input id="classId" type="text" placeholder="e.g. 222303102" class="form-input" />
+        </div>
+
+        <div>
+          <label for="session" class="mb-1.5 block text-[13px] font-semibold text-slate-700">
+            8. Session <span class="text-rose-600">*</span>
+          </label>
+          <input id="session" type="text" placeholder="e.g. 22-23" class="form-input" />
+        </div>
+
+        <div>
+          <label for="teacherName" class="mb-1.5 block text-[13px] font-semibold text-slate-700">
+            9. Teacher Name <span class="text-rose-600">*</span>
+          </label>
+          <input id="teacherName" type="text" placeholder="e.g. Rakibul Hasan" class="form-input" />
+        </div>
+
+        <div>
+          <label for="teacherDesignation" class="mb-1.5 block text-[13px] font-semibold text-slate-700">
+            10. Teacher Designation <span class="text-rose-600">*</span>
+          </label>
+          <input id="teacherDesignation" type="text" placeholder="e.g. Lecturer, Department of CSE" class="form-input" />
+        </div>
+      </div>
+
+      <!-- Creator Card -->
+      <div class="mt-5 rounded-[10px] border border-[#d0e3f7] border-l-4 border-l-[#1a4b8c] bg-gradient-to-br from-[#f0f7ff] to-[#e8f1fb] px-4 py-3.5">
+        <div class="mb-1 text-[11px] font-bold uppercase tracking-[0.5px] text-slate-500">Created By</div>
+        <div class="mb-0.5 text-sm font-bold text-[#0f2c5a]">Md. Shazzadul Islam Samim</div>
+        <div class="text-xs leading-[1.4] text-slate-600">Department of Computer Science & Engineering (CSE)</div>
+      </div>
+
+      <!-- Error Message -->
+      <div id="error" class="mt-4 hidden rounded-lg border border-rose-200 bg-rose-50 px-3.5 py-2.5 text-[13px] text-rose-700"></div>
+
+      <!-- Buttons -->
+      <div class="sticky bottom-0 mt-7 grid grid-cols-2 gap-3 bg-white pb-1 pt-4">
+        <button onclick="generatePDF()"
+          class="generate rounded-[9px] bg-gradient-to-br from-[#1a4b8c] to-[#123f70] px-4 py-[13px] text-sm font-semibold text-white shadow-[0_4px_12px_rgba(18,63,112,0.25)] transition-all duration-200 hover:-translate-y-px hover:from-[#123f70] hover:to-[#0f2c5a] hover:shadow-[0_6px_16px_rgba(18,63,112,0.3)] disabled:cursor-not-allowed disabled:opacity-65 disabled:transform-none">
+          Generate PDF
+        </button>
+        <button onclick="resetForm()"
+          class="rounded-[9px] border border-[#e2e8f0] bg-slate-100 px-4 py-[13px] text-sm font-semibold text-slate-700 transition-all duration-200 hover:bg-slate-200 hover:text-slate-800">
+          Clear
+        </button>
+      </div>
     </section>
 
-    <section class="preview-area">
-        <div id="coverPage" class="cover-page">
+    <!-- ========== PREVIEW AREA ========== -->
+    <section class="flex items-start justify-center overflow-auto bg-[#e8eef5] p-[30px] max-[1000px]:px-3 max-[1000px]:pb-10 max-[1000px]:pt-[18px]">
 
-            <div class="logo-area">
-                <img src="istt.jpg" alt="ISTT Logo" onerror="this.style.display='none'" />
-            </div>
+      <div id="coverPage" class="cover-page mobile-cover shadow-[0_8px_30px_rgba(0,0,0,0.12)]">
 
-            <div class="institution">
-                <h1>Institute of Science Trade & Technology (ISTT)</h1>
-                <h2 id="previewDepartment">Department of Computer Science & Engineering (CSE)</h2>
-                <h3>LAB Report</h3>
-            </div>
+        <!-- Logo -->
+        <div class="flex h-[32mm] items-center justify-center">
+          <img src="istt.jpg" alt="ISTT Logo"
+            class="h-[30mm] w-auto max-w-[58mm] object-contain"
+            onerror="this.style.display='none'" />
+        </div>
 
-            <div class="subject">
-                Subject: <span id="previewSubject">—</span>
-            </div>
-            <div class="subject-code">
-                Subject Code: <span id="previewSubjectCode">—</span>
-            </div>
+        <!-- Institution Info -->
+        <div class="mt-[2mm] text-center">
+          <h1 class="m-0 text-[17.5pt] font-bold leading-[1.25] tracking-[0.3px]">
+            Institute of Science Trade & Technology (ISTT)
+          </h1>
+          <h2 id="previewDepartment" class="mt-[3px] text-[12pt] font-normal leading-[1.3]">
+            Department of Computer Science & Engineering (CSE)
+          </h2>
+          <h3 class="mt-[6px] text-[14.5pt] font-bold">LAB Report</h3>
+        </div>
 
-            <div class="date">
-                Submission Date: <span id="previewDate">—</span>
-            </div>
+        <!-- Subject -->
+        <div class="mt-[8mm] text-center text-[12.5pt] font-bold">
+          Subject: <span id="previewSubject">—</span>
+        </div>
+        <div class="mt-[2.5px] text-center text-[11.5pt] font-bold">
+          Subject Code: <span id="previewSubjectCode">—</span>
+        </div>
 
-            <div class="info">
-                <div class="watermark">
-                    <img src="nu.jpg" alt="National University Logo" onerror="this.style.display='none'" />
+        <!-- Date -->
+        <div class="mt-[8mm] text-[11pt] font-bold">
+          Submission Date: <span id="previewDate">—</span>
+        </div>
+
+        <!-- Info Table + Watermark -->
+        <div class="relative mt-[9mm]">
+          <!-- Watermark -->
+          <div class="pointer-events-none absolute left-1/2 top-[48%] z-0 w-[145mm] -translate-x-1/2 -translate-y-1/2 opacity-[0.15]">
+            <img src="nu.jpg" alt="National University Logo" class="block h-auto w-full"
+              onerror="this.style.display='none'" />
+          </div>
+
+          <table class="relative z-[1] w-full table-fixed border-collapse bg-white/[0.78] text-[11pt]">
+            <tr>
+              <th class="w-[58%] border-[1.3px] border-[#222] bg-white/[0.9] px-2 py-1.5 text-center text-[12pt] font-bold">
+                Submitted By
+              </th>
+              <th class="w-[42%] border-[1.3px] border-[#222] bg-white/[0.9] px-2 py-1.5 text-center text-[12pt] font-bold">
+                Submitted To
+              </th>
+            </tr>
+            <tr>
+              <!-- Submitted By -->
+              <td class="border-[1.3px] border-[#222] px-2 py-1.5 align-top">
+                <div class="mb-1.5 leading-[1.35]">
+                  <span class="inline-block min-w-[68px] font-bold">Name</span>:
+                  <span id="previewName">—</span>
                 </div>
+                <div class="mb-1.5 leading-[1.35]">
+                  <span class="inline-block min-w-[68px] font-bold">Semester</span>:
+                  <span id="previewSemester">—</span>
+                </div>
+                <div class="mb-1.5 leading-[1.35]">
+                  <span class="inline-block min-w-[68px] font-bold">Section</span>:
+                  <span id="previewSection">—</span>
+                </div>
+                <div class="mb-1.5 leading-[1.35]">
+                  <span class="inline-block min-w-[68px] font-bold">Class ID</span>:
+                  <span id="previewClassId">—</span>
+                </div>
+                <div class="leading-[1.35]">
+                  <span class="inline-block min-w-[68px] font-bold">Session</span>:
+                  <span id="previewSession">—</span>
+                </div>
+              </td>
 
-                <table class="info-table">
-                    <tr>
-                        <th class="by">Submitted By</th>
-                        <th class="to">Submitted To</th>
-                    </tr>
-                    <tr>
-                        <td>
-                            <div class="line">
-                                <span class="label">Name</span> : <span id="previewName">—</span>
-                            </div>
-                            <div class="line">
-                                <span class="label">Semester</span> : <span id="previewSemester">—</span>
-                            </div>
-                            <div class="line">
-                                <span class="label">Section</span> : <span id="previewSection">—</span>
-                            </div>
-                            <div class="line">
-                                <span class="label">Class ID</span> : <span id="previewClassId">—</span>
-                            </div>
-                            <div class="line">
-                                <span class="label">Session</span> : <span id="previewSession">—</span>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="line">
-                                Name : <span id="previewTeacherName">—</span>
-                            </div>
-                            <div class="line" id="previewTeacherDesignation">—</div>
-                            <div class="line">Institute of Science Trade & Technology,</div>
-                            <div class="line">Mirpur-13, Dhaka.</div>
-                        </td>
-                    </tr>
-                </table>
-            </div>
-
-            <div class="signatures">
-                <div class="signature">Signature & Date</div>
-                <div class="signature">Signature & Date</div>
-            </div>
+              <!-- Submitted To -->
+              <td class="border-[1.3px] border-[#222] px-2 py-1.5 align-top">
+                <div class="mb-1.5 leading-[1.35]">
+                  Name: <span id="previewTeacherName">—</span>
+                </div>
+                <div id="previewTeacherDesignation" class="mb-1.5 leading-[1.35]">—</div>
+                <div class="mb-1.5 leading-[1.35]">Institute of Science Trade & Technology,</div>
+                <div class="leading-[1.35]">Mirpur-13, Dhaka.</div>
+              </td>
+            </tr>
+          </table>
         </div>
+
+        <!-- Signatures -->
+        <div class="mt-[28mm] grid grid-cols-2 gap-[40mm] text-[11pt]">
+          <div>Signature & Date</div>
+          <div>Signature & Date</div>
+        </div>
+      </div>
     </section>
-</main>
+  </main>
 
-<script>
-    const fields = {
-        department: "previewDepartment",
-        subject: "previewSubject",
-        subjectCode: "previewSubjectCode",
-        studentName: "previewName",
-        semester: "previewSemester",
-        section: "previewSection",
-        classId: "previewClassId",
-        session: "previewSession",
-        teacherName: "previewTeacherName",
-        teacherDesignation: "previewTeacherDesignation"
-    };
-
-    function formatDate(value) {
-        if (!value) return "—";
-        const date = new Date(value + "T00:00:00");
-        return date.toLocaleDateString("en-GB", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric"
-        });
-    }
-
-    function updatePreview() {
-        for (const [inputId, previewId] of Object.entries(fields)) {
-            const input = document.getElementById(inputId);
-            const preview = document.getElementById(previewId);
-            if (!input || !preview) continue;
-            preview.textContent = input.value.trim() || "—";
-        }
-        document.getElementById("previewDate").textContent =
-            formatDate(document.getElementById("submissionDate").value);
-    }
-
-    document.querySelectorAll("input").forEach(input => {
-        input.addEventListener("input", updatePreview);
-        input.addEventListener("change", updatePreview);
+  <!-- ===================== JAVASCRIPT ===================== -->
+  <script>
+    // Shared input style (applied via class)
+    document.querySelectorAll('.form-input').forEach(el => {
+      el.className += ' w-full rounded-[9px] border-[1.5px] border-[#e2e8f0] bg-[#f8fafc] px-[13px] py-[11px] text-sm text-slate-800 outline-none transition-all duration-200 hover:border-slate-300 hover:bg-white focus:border-[#1a4b8c] focus:bg-white focus:ring-[3px] focus:ring-[#1a4b8c]/[0.12]';
     });
 
+    // Field mapping: input ID → preview element ID
+    const fields = {
+      department: 'previewDepartment',
+      subject: 'previewSubject',
+      subjectCode: 'previewSubjectCode',
+      studentName: 'previewName',
+      semester: 'previewSemester',
+      section: 'previewSection',
+      classId: 'previewClassId',
+      session: 'previewSession',
+      teacherName: 'previewTeacherName',
+      teacherDesignation: 'previewTeacherDesignation'
+    };
+
+    // Format date as DD/MM/YYYY
+    function formatDate(value) {
+      if (!value) return '—';
+      const date = new Date(value + 'T00:00:00');
+      return date.toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    }
+
+    // Update live preview
+    function updatePreview() {
+      for (const [inputId, previewId] of Object.entries(fields)) {
+        const input = document.getElementById(inputId);
+        const preview = document.getElementById(previewId);
+        if (input && preview) {
+          preview.textContent = input.value.trim() || '—';
+        }
+      }
+      document.getElementById('previewDate').textContent =
+        formatDate(document.getElementById('submissionDate').value);
+    }
+
+    // Live listeners
+    document.querySelectorAll('input').forEach(input => {
+      input.addEventListener('input', updatePreview);
+      input.addEventListener('change', updatePreview);
+    });
+
+    // Validate all required fields
     function validate() {
-        const required = [
-            "department", "subject", "subjectCode", "submissionDate",
-            "studentName", "semester", "section", "classId",
-            "session", "teacherName", "teacherDesignation"
-        ];
-        const missing = required.filter(id => {
-            const el = document.getElementById(id);
-            return !el || !el.value.trim();
-        });
-        const error = document.getElementById("error");
-        if (missing.length > 0) {
-            error.style.display = "block";
-            error.textContent = "Please complete all required fields before generating the PDF.";
-            return false;
-        }
-        error.style.display = "none";
-        return true;
+      const required = [
+        'department', 'subject', 'subjectCode', 'submissionDate',
+        'studentName', 'semester', 'section', 'classId',
+        'session', 'teacherName', 'teacherDesignation'
+      ];
+
+      const missing = required.filter(id => {
+        const el = document.getElementById(id);
+        return !el || !el.value.trim();
+      });
+
+      const errorEl = document.getElementById('error');
+      if (missing.length > 0) {
+        errorEl.classList.remove('hidden');
+        errorEl.textContent = 'Please complete all required fields before generating the PDF.';
+        return false;
+      }
+
+      errorEl.classList.add('hidden');
+      return true;
     }
 
+    // Wait until all images inside a container are loaded
     function waitForImages(container) {
-        const images = container.querySelectorAll("img");
-        return Promise.all(
-            Array.from(images).map(img => {
-                if (img.complete && img.naturalWidth > 0) return Promise.resolve();
-                return new Promise(resolve => {
-                    img.onload = resolve;
-                    img.onerror = resolve;
-                });
-            })
-        );
+      const images = container.querySelectorAll('img');
+      return Promise.all(
+        Array.from(images).map(img => {
+          if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+          return new Promise(resolve => {
+            img.onload = resolve;
+            img.onerror = resolve;
+          });
+        })
+      );
     }
 
+    // Generate PDF
     async function generatePDF() {
-        updatePreview();
-        if (!validate()) return;
+      updatePreview();
+      if (!validate()) return;
 
-        const button = document.querySelector(".generate");
-        button.disabled = true;
-        button.textContent = "Creating PDF...";
+      const button = document.querySelector('.generate');
+      button.disabled = true;
+      button.textContent = 'Creating PDF...';
 
-        let clone = null;
+      let clone = null;
 
-        try {
-            const original = document.getElementById("coverPage");
+      try {
+        const original = document.getElementById('coverPage');
+        clone = original.cloneNode(true);
+        clone.id = 'coverPage-clone';
+        document.body.appendChild(clone);
 
-            // Clean clone – class থাকবে বলে সব স্টাইল (padding সহ) ঠিকমতো apply হবে
-            clone = original.cloneNode(true);
-            clone.id = "coverPage-clone";
-            clone.style.cssText = `
-                position: absolute !important;
-                left: -9999px !important;
-                top: 0 !important;
-                width: 210mm !important;
-                height: 297mm !important;
-                transform: none !important;
-                zoom: 1 !important;
-                margin: 0 !important;
-                box-shadow: none !important;
-            `;
-            document.body.appendChild(clone);
+        // Wait for fonts & images
+        if (document.fonts?.ready) await document.fonts.ready;
+        await waitForImages(clone);
+        await new Promise(r => setTimeout(r, 200));
 
-            if (document.fonts && document.fonts.ready) {
-                await document.fonts.ready;
-            }
-            await waitForImages(clone);
-            await new Promise(r => setTimeout(r, 200));
+        // Render to canvas
+        const canvas = await html2canvas(clone, {
+          scale: 3,
+          backgroundColor: '#ffffff',
+          useCORS: true,
+          allowTaint: false,
+          logging: false,
+          imageTimeout: 20000,
+          scrollX: 0,
+          scrollY: 0,
+          windowWidth: clone.scrollWidth,
+          windowHeight: clone.scrollHeight
+        });
 
-            const canvas = await html2canvas(clone, {
-                scale: 3,
-                backgroundColor: "#ffffff",
-                useCORS: true,
-                allowTaint: false,
-                logging: false,
-                imageTimeout: 20000,
-                scrollX: 0,
-                scrollY: 0,
-                windowWidth: clone.scrollWidth,
-                windowHeight: clone.scrollHeight
-            });
+        // Create PDF
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({
+          orientation: 'portrait',
+          unit: 'mm',
+          format: 'a4',
+          compress: true
+        });
 
-            const { jsPDF } = window.jspdf;
-            const pdf = new jsPDF({
-                orientation: "portrait",
-                unit: "mm",
-                format: "a4",
-                compress: true
-            });
+        const imgData = canvas.toDataURL('image/png', 1.0);
+        pdf.addImage(imgData, 'PNG', 0, 0, 210, 297, undefined, 'FAST');
 
-            const imgData = canvas.toDataURL("image/png", 1.0);
-            pdf.addImage(imgData, "PNG", 0, 0, 210, 297, undefined, "FAST");
+        // Clean file name
+        const clean = str => str.trim().replace(/[^a-z0-9]+/gi, '_').replace(/^_|_$/g, '') || 'Unknown';
+        const studentName = clean(document.getElementById('studentName').value) || 'Student';
+        const subject = clean(document.getElementById('subject').value) || 'Cover';
 
-            const studentName = document.getElementById("studentName").value
-                .trim().replace(/[^a-z0-9]+/gi, "_").replace(/^_|_$/g, "") || "Student";
-            const subject = document.getElementById("subject").value
-                .trim().replace(/[^a-z0-9]+/gi, "_").replace(/^_|_$/g, "") || "Cover";
-
-            pdf.save(`${studentName}_${subject}_Cover_Page.pdf`);
-
-        } catch (err) {
-            console.error(err);
-            alert("PDF তৈরি করা যায়নি। Logo files (istt.jpg & nu.jpg) check করুন এবং আবার try করুন।");
-        } finally {
-            if (clone && clone.parentNode) {
-                clone.parentNode.removeChild(clone);
-            }
-            button.disabled = false;
-            button.textContent = "Generate PDF";
-        }
+        pdf.save(`${studentName}_${subject}_Cover_Page.pdf`);
+      } catch (err) {
+        console.error(err);
+        alert('PDF তৈরি করা যায়নি। Logo files (istt.jpg & nu.jpg) check করুন এবং আবার try করুন।');
+      } finally {
+        if (clone?.parentNode) clone.parentNode.removeChild(clone);
+        button.disabled = false;
+        button.textContent = 'Generate PDF';
+      }
     }
 
+    // Reset form
     function resetForm() {
-        document.querySelectorAll("input").forEach(i => i.value = "");
-        document.getElementById("department").value = "Department of Computer Science & Engineering (CSE)";
-        updatePreview();
-        document.getElementById("error").style.display = "none";
+      document.querySelectorAll('input').forEach(input => input.value = '');
+      document.getElementById('department').value =
+        'Department of Computer Science & Engineering (CSE)';
+      updatePreview();
+      document.getElementById('error').classList.add('hidden');
     }
 
+    // Initial preview
     updatePreview();
-</script>
+  </script>
 </body>
 </html>
