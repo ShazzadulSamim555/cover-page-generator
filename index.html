@@ -43,24 +43,24 @@
       color: #000;
     }
 
-    /* ===== MOBILE PREVIEW - Larger & closer to original PDF ===== */
+    /* ===== MOBILE PREVIEW - Full width, no side margin ===== */
     @media (max-width: 1000px) {
       .mobile-cover {
-        transform: scale(0.78);
+        transform: scale(0.48);
         transform-origin: top center;
-        margin-bottom: -65mm;
+        margin-bottom: -155mm;
       }
     }
     @media (max-width: 480px) {
       .mobile-cover {
-        transform: scale(0.68);
-        margin-bottom: -95mm;
+        transform: scale(0.45);
+        margin-bottom: -163mm;
       }
     }
     @media (max-width: 380px) {
       .mobile-cover {
-        transform: scale(0.60);
-        margin-bottom: -119mm;
+        transform: scale(0.42);
+        margin-bottom: -172mm;
       }
     }
 
@@ -209,7 +209,7 @@
     </section>
 
     <!-- ========== PREVIEW AREA ========== -->
-    <section class="flex items-start justify-center overflow-auto bg-[#e8eef5] p-[30px] max-[1000px]:px-1 max-[1000px]:pt-3 max-[1000px]:pb-4">
+    <section class="flex items-start justify-center overflow-x-hidden overflow-y-auto bg-[#e8eef5] p-[30px] max-[1000px]:p-0 max-[1000px]:pt-2">
 
       <div id="coverPage" class="cover-page mobile-cover shadow-[0_8px_30px_rgba(0,0,0,0.12)]">
 
